@@ -28,8 +28,8 @@ If flakes are not enabled on the host:
 nix --extra-experimental-features 'nix-command flakes' develop
 ```
 
-The shell provides: Ghidra 12.2 (+ JDK 21), jadx, apktool, dex2jar, procyon,
-cfr, bytecode-viewer, radare2, rizin, cutter, gdb/gef, lldb, binutils, patchelf,
+The shell provides: Ghidra 12.1.4 (+ JDK 21), jadx, apktool, dex2jar, procyon,
+cfr, bytecode-viewer, radare2, rizin, gdb/gef, lldb, binutils, patchelf,
 rr, android-tools (adb/fastboot), aapt, apksigner, bundletool, apkid, scrcpy,
 frida-tools, jnitrace, a Python 3 with androguard/capstone/keystone/unicorn/
 pwntools/lief/pyelftools, mitmproxy, tshark, tcpdump, nmap, binwalk, ghex,
@@ -43,6 +43,15 @@ Notes:
 - `smali`/`baksmali` are not in nixpkgs; `apktool` and `jadx` cover that need.
 - Ghidra is exposed as `ghidra` (GUI) and `ghidra-analyzeHeadless` (CLI).
 - `JAVA_HOME` and `GHIDRA_HOME` are exported by the shell hook.
+- Ghidra is pinned to **12.1.4** via the `nixpkgs-ghidra` input
+  (`ghidra-bin`), not unstable's 12.2: the REA MCP server's Ghidra bridge
+  accepts only the 12.1.x line. Ghidra 12.1.4 declares
+  `application.java.min=21`, so the shell's **JDK 21** satisfies REA; 12.2
+  declares `min=25` and is rejected. After changing Ghidra/JDK, restart the
+  MCP client so REA re-reads `GHIDRA_HOME`.
+- `cutter` is intentionally absent. It is only a Qt GUI over rizin; REA's
+  `cutter_command` merely attaches to a Cutter you started yourself. Use
+  `rizin`/`radare2` (or REA's `execute_rizin_command`) plus Ghidra instead.
 
 ## Layout
 
@@ -54,6 +63,7 @@ todo.md         living task list / progress log
 out/            decompiled + extracted artifacts (gitignored)
 ghidra/         Ghidra projects (gitignored)
 scripts/        helper scripts (tracked)
+  ghidra/       Ghidra scripts (run with -scriptPath scripts/ghidra)
 ```
 
 ## Working conventions

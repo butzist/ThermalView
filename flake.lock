@@ -16,9 +16,26 @@
         "type": "github"
       }
     },
+    "nixpkgs-ghidra": {
+      "locked": {
+        "lastModified": 1791445186,
+        "narHash": "sha256-YXlYnmCcqjwfWh8IuWm9fKkIM693AVS5wmwbnHNXmls=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "6641e07562b9a2d9ea67b331659fbdd42a686c3f",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "6641e07562b9a2d9ea67b331659fbdd42a686c3f",
+        "type": "github"
+      }
+    },
     "root": {
       "inputs": {
-        "nixpkgs": "nixpkgs"
+        "nixpkgs": "nixpkgs",
+        "nixpkgs-ghidra": "nixpkgs-ghidra"
       }
     }
   },
