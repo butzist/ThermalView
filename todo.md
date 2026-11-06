@@ -19,9 +19,11 @@ Living progress log for the ThermalView RE effort.
 - [x] Add Python deps for the driver to the dev shell: `pyserial`, `pyusb`,
       `numpy`, `pillow`, `pytest`
 - [x] Add USB tooling to the dev shell: `usbutils`, `picocom`, `screen`
-- [x] `.envrc`: export `JAIL_EXTRA_ARGS_THERMALVIEW` with `--dev-bind-try /dev`,
-      `--ro-bind-try /sys`, `--ro-bind-try /run/udev` so the adapter is visible
-      inside the bwrap jail
+- [x] `.envrc`: export `JAIL_EXTRA_ARGS_THERMALVIEW` with `--ro-bind-try /sys`,
+      `--ro-bind-try /run/udev` and `--dev-bind-try` for **only the specific
+      serial tty nodes** (`/dev/ttyUSB*`, `/dev/ttyACM*`, `/dev/serial` ro);
+      the whole `/dev` is never shared. `--dev-bind-try` skips absent nodes,
+      so the jail starts with the adapter unplugged.
 
 Notes:
 

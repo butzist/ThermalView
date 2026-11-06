@@ -55,8 +55,10 @@ Notes:
 - The dev shell also carries the driver dependencies: `pyserial`, `pyusb`,
   `numpy`, `pillow`, `pytest`, plus `usbutils`, `picocom` and `screen`.
 - The USB adapter must be visible **inside the bwrap jail**. `.envrc` exports
-  `JAIL_EXTRA_ARGS_THERMALVIEW` (`--dev-bind-try /dev`, `--ro-bind-try /sys`,
-  `--ro-bind-try /run/udev`); restart the jail/MCP client after changing it.
+  `JAIL_EXTRA_ARGS_THERMALVIEW` with `--ro-bind-try /sys` and
+  `--ro-bind-try /run/udev` plus `--dev-bind-try` for **only the serial tty
+  nodes** (`/dev/ttyUSB*`, `/dev/ttyACM*`, and `/dev/serial` read-only) — never
+  the whole of `/dev`. Restart the jail/MCP client after changing it.
 
 ## Tooling / MCP servers
 

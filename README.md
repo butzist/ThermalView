@@ -110,7 +110,8 @@ integer truncation) and maps a Celsius array to RGB.
   filter and the default prober point at `1a86:7523` (CH340).  The driver
   accepts both plus FTDI/CP210x/PL2303 alternatives.
 - `/dev/ttyUSB*` must be visible inside the sandbox; see `.envrc`
-  (`JAIL_EXTRA_ARGS`).
+  (`JAIL_EXTRA_ARGS`). Only the serial tty nodes and `/dev/serial` are bound —
+  never the whole `/dev`.
 
 ## Tests
 
