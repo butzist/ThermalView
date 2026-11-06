@@ -12,12 +12,19 @@ result-*
 .venv/
 __pycache__/
 *.pyc
+*.egg-info/
+.pytest_cache/
+build/
+dist/
 
 # editor / OS
 .DS_Store
 *.swp
 .idea/
 .vscode/
+
+# tooling caches
+.serena/
 
 # bwrap
 .home/

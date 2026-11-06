@@ -38,6 +38,12 @@
               requests
               rich
               unicorn
+              # --- ThermalView USB library ---------------------------------------
+              pyserial # /dev/ttyUSB* transport
+              pyusb # optional direct-USB transport / descriptor inspection
+              numpy # 32x32 temperature frames
+              pillow # PNG/JPEG rendering
+              pytest # test suite
             ]
           );
         in
@@ -71,6 +77,11 @@
               bundletool
               apkid
               scrcpy
+
+              # --- USB serial adapter -------------------------------------------------
+              usbutils # lsusb, lsusb -t
+              picocom # manual poking at /dev/ttyUSB*
+              screen # fallback serial console
 
               # --- dynamic instrumentation -------------------------------------------
               frida-tools # frida, frida-ps, frida-trace, ...
@@ -118,6 +129,7 @@
               echo "  android: adb, fastboot, aapt, apksigner, bundletool"
               echo "  dynamic: frida, jnitrace, gdb/gef, lldb"
               echo "  net:     mitmproxy, tshark, nmap"
+              echo "  usb:     pyserial, pyusb, lsusb; run: python -m thermalview info"
             '';
           };
         }
