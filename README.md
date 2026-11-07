@@ -33,6 +33,9 @@ python -m thermalview capture --png frame.png
 # live stats (Ctrl-C to stop)
 python -m thermalview stream
 
+# live web viewer (opens a browser, no GUI toolkit required)
+python -m thermalview view
+
 # record the raw serial stream for later analysis
 python -m thermalview capture --count 30 --record out/session.bin
 
@@ -77,6 +80,9 @@ Incoming frames:
 ```
 
 Each sample is **tenths of a degree Celsius**: `T = raw / 10.0`.
+
+Some firmware variants (e.g. the Espressif CDC build) stream raw 2048-byte
+frames with no `00 80` header; the driver auto-detects this mode.
 `TempData` also handles `00 90` status packets (subtype `4`/`5` = start/stop
 ack); the parser reports them as `StatusEvent`.
 

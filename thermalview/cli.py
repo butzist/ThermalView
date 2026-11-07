@@ -10,6 +10,7 @@ from pathlib import Path
 
 from . import __version__
 from .device import ThermalCamera, find_ports, resolve_port
+from .viewer import ThermalViewer, serve
 from .frame import ThermalFrame, frames_from_bytes
 from .palette import palette_names
 from .render import save_frame, save_npy, temperature_csv
@@ -23,6 +24,11 @@ def _add_port_options(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--timeout", type=float, default=2.0, help="per-frame timeout")
     parser.add_argument("--x-flip", action="store_true", help="mirror each row")
     parser.add_argument("--y-flip", action="store_true", help="flip vertically")
+    parser.add_argument(
+        "--raw",
+        action="store_true",
+        help="force raw (headerless) 2048-byte frame mode instead of auto-detect",
+    )
 
 
 def _add_render_options(parser: argparse.ArgumentParser) -> None:
@@ -115,6 +121,7 @@ def _open_camera(args: argparse.Namespace) -> ThermalCamera:
         x_flip=args.x_flip,
         y_flip=args.y_flip,
         auto_start=getattr(args, "auto_start", False),
+        raw=True if getattr(args, "raw", False) else None,
     )
     camera.open()
     return camera
@@ -261,6 +268,34 @@ def cmd_emissivity(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_view(args: argparse.Namespace) -> int:
+    try:
+        camera = _open_camera(args)
+    except (RuntimeError, OSError) as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 1
+    viewer = ThermalViewer(
+        camera,
+        palette=args.palette,
+        size=args.size,
+        vmin=args.vmin,
+        vmax=args.vmax,
+        app_auto_range=args.app_auto_range,
+    )
+    try:
+        serve(
+            viewer,
+            host=args.host,
+            port=args.http_port,
+            open_browser=not args.no_browser,
+        )
+    except KeyboardInterrupt:
+        pass
+    finally:
+        viewer.stop()
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="thermalview",
@@ -315,6 +350,14 @@ def build_parser() -> argparse.ArgumentParser:
     _add_port_options(emissivity)
     emissivity.add_argument("value", type=float, help="0.10 .. 0.98")
     emissivity.set_defaults(func=cmd_emissivity)
+
+    view = sub.add_parser("view", help="live web viewer (opens a browser)")
+    _add_port_options(view)
+    _add_render_options(view)
+    view.add_argument("--host", default="127.0.0.1", help="bind host (default 127.0.0.1)")
+    view.add_argument("--http-port", type=int, default=8765, help="HTTP port (default 8765)")
+    view.add_argument("--no-browser", action="store_true", help="do not open a browser")
+    view.set_defaults(func=cmd_view)
 
     return parser
 

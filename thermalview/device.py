@@ -18,6 +18,8 @@ except ImportError as exc:  # pragma: no cover - dependency is in the dev shell
 
 from .frame import DEFAULT_SCALE, ThermalFrame, decode_payload
 from .protocol import (
+    FRAME_MAGIC,
+    PAYLOAD_SIZE,
     FrameParser,
     FramePayload,
     StatusEvent,
@@ -43,6 +45,7 @@ KNOWN_DEVICES: dict[tuple[int, int], str] = {
     (0x0483, 0x5740): "STM32 virtual COM port",
     (0x2E8A, 0x0005): "Raspberry Pi Pico",
     (0x2E8A, 0x000A): "Raspberry Pi Pico",
+    (0x303A, 0x4001): "Espressif CDC (ThermalView device)",
 }
 
 
@@ -131,6 +134,7 @@ class ThermalCamera:
         x_flip: bool = False,
         y_flip: bool = False,
         auto_start: bool = False,
+        raw: bool | None = None,
     ) -> None:
         self.port = port
         self.baudrate = baudrate
@@ -139,12 +143,18 @@ class ThermalCamera:
         self.x_flip = x_flip
         self.y_flip = y_flip
         self.auto_start = auto_start
+        #: ``True`` forces raw 2048-byte frames, ``False`` forces framed
+        #: (``00 80`` headers), ``None`` auto-detects from the byte stream.
+        self.raw = raw
 
         self._port: serial.Serial | None = None
         self._parser = FrameParser()
         self._pending: deque[FramePayload | StatusEvent] = deque()
         self.last_status: StatusEvent | None = None
         self.raw_bytes = 0
+        self._rx_mode: str | None = None  # "framed" or "raw"
+        self._raw_buf = bytearray()
+        self._detect_buf = bytearray()
         #: Optional callback receiving every raw chunk (for capture files).
         self.chunk_hook: Callable[[bytes], object] | None = None
 
@@ -186,6 +196,14 @@ class ThermalCamera:
         self._pending.clear()
         self.last_status = None
         self.raw_bytes = 0
+        self._raw_buf.clear()
+        self._detect_buf.clear()
+        if self.raw is True:
+            self._rx_mode = "raw"
+        elif self.raw is False:
+            self._rx_mode = "framed"
+        else:
+            self._rx_mode = None
         if self.auto_start:
             self.start()
         return self
@@ -236,16 +254,45 @@ class ThermalCamera:
 
     # -- reading -----------------------------------------------------------
 
+    def _drain_raw(self) -> None:
+        while len(self._raw_buf) >= PAYLOAD_SIZE:
+            payload = bytes(self._raw_buf[:PAYLOAD_SIZE])
+            del self._raw_buf[:PAYLOAD_SIZE]
+            self._pending.append(FramePayload(payload))
+
     def _read_chunk(self) -> bytes:
         if not self.is_open:
             raise RuntimeError("camera is not open")
         assert self._port is not None
         chunk = self._port.read(4096)
-        if chunk:
-            self.raw_bytes += len(chunk)
-            if self.chunk_hook is not None:
-                self.chunk_hook(chunk)
+        if not chunk:
+            return chunk
+        self.raw_bytes += len(chunk)
+        if self.chunk_hook is not None:
+            self.chunk_hook(chunk)
+
+        if self._rx_mode is None:
+            self._detect_buf.extend(chunk)
+            if FRAME_MAGIC in self._detect_buf:
+                self._rx_mode = "framed"
+            elif len(self._detect_buf) >= PAYLOAD_SIZE:
+                self._rx_mode = "raw"
+            else:
+                return chunk
+            data = bytes(self._detect_buf)
+            self._detect_buf.clear()
+            if self._rx_mode == "framed":
+                self._pending.extend(self._parser.feed(data))
+            else:
+                self._raw_buf.extend(data)
+                self._drain_raw()
+            return chunk
+
+        if self._rx_mode == "framed":
             self._pending.extend(self._parser.feed(chunk))
+        else:
+            self._raw_buf.extend(chunk)
+            self._drain_raw()
         return chunk
 
     def read_event(self, timeout: float | None = None) -> FramePayload | StatusEvent | None:

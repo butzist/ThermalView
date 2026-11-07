@@ -143,8 +143,20 @@ def frames_from_bytes(
         yield decode_payload(data, x_flip=x_flip, y_flip=y_flip, scale=scale)
         return
     parser = FrameParser()
-    for event in parser.feed(data):
-        if isinstance(event, FramePayload):
+    events = parser.feed(data)
+    frames = [e for e in events if isinstance(e, FramePayload)]
+    if frames:
+        for event in frames:
             yield decode_payload(
                 event.data, x_flip=x_flip, y_flip=y_flip, scale=scale
+            )
+        return
+    # Raw (headerless) stream: split into consecutive 2048-byte frames.
+    if len(data) >= PAYLOAD_SIZE and len(data) % PAYLOAD_SIZE == 0:
+        for offset in range(0, len(data), PAYLOAD_SIZE):
+            yield decode_payload(
+                data[offset : offset + PAYLOAD_SIZE],
+                x_flip=x_flip,
+                y_flip=y_flip,
+                scale=scale,
             )

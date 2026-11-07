@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ThermalView Web</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <h1>ThermalView</h1>
+  <div class="controls">
+    <button id="connectBtn">Connect</button>
+    <button id="disconnectBtn" disabled>Disconnect</button>
+    <select id="palette">
+      <option value="iron_red">Iron Red</option>
+      <option value="rainbow">Rainbow</option>
+      <option value="white_hot">White Hot</option>
+      <option value="blue_orange">Blue Orange</option>
+      <option value="blue_yellow">Blue Yellow</option>
+    </select>
+    <label><input type="checkbox" id="autoRange" checked> auto range</label>
+    <label>min <input type="number" id="vmin" step="0.1" value="15"></label>
+    <label>max <input type="number" id="vmax" step="0.1" value="30"></label>
+    <button id="saveBtn">Save PNG</button>
+  </div>
+</header>
+<main>
+  <canvas id="canvas" width="32" height="32"></canvas>
+  <aside>
+    <div class="stat"><span>min</span><strong id="min">--</strong></div>
+    <div class="stat"><span>max</span><strong id="max">--</strong></div>
+    <div class="stat"><span>mean</span><strong id="mean">--</strong></div>
+    <div class="stat"><span>centre</span><strong id="center">--</strong></div>
+    <div class="stat"><span>min@</span><strong id="minpos">--</strong></div>
+    <div class="stat"><span>max@</span><strong id="maxpos">--</strong></div>
+    <div class="stat"><span>frames</span><strong id="frames">0</strong></div>
+    <div class="stat"><span>status</span><strong id="status">disconnected</strong></div>
+  </aside>
+</main>
+<script src="app.js"></script>
+</body>
+</html>

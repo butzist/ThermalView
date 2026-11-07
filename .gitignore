@@ -29,3 +29,9 @@ dist/
 # bwrap
 .home/
 .direnv/
+
+# target artifact (never publish)
+/base.apk
+/libhongwai.so
+*.apk
+*.so

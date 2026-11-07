@@ -82,11 +82,9 @@ Source of truth: `out/jadx/sources/com/ruiqi/hongwai/TempData.java` and
 - [x] Candidate USB IDs: `1a86:7523` CH340 (default prober + device filter),
       `1a86:5523` CH341, `1a86:55d4` CH9102, FTDI/CP210x/PL2303 alternatives;
       `CustomProber` maps `1a86:7522` -> FTDI (looks like dead code)
-- [ ] **Confirm actual VID:PID and `/dev/ttyUSB*` on real hardware**
-- [ ] **Confirm whether opening the port alone starts the stream** (or whether
-      `0x04` is required)
-- [ ] Capture one real session to validate header/chunk boundaries and pixel
-      endianness end-to-end
+- [x] **Confirm actual VID:PID on real hardware**: `303a:4001` Espressif Systems USB Device (CDC ACM), exposed as `/dev/ttyACM0`. Not the CH340 (`1a86:7523`) the app's device_filter targets; added to `KNOWN_DEVICES`. No CH340/FTDI/CP210x device present.
+- [x] **Confirm whether opening the port alone starts the stream**: yes. The device streams continuously as soon as the port is opened (115200 8N1, DTR/RTS asserted). No start command (`0x04`) is needed (and sending it does not change behaviour).
+- [x] Capture real sessions (`out/bigcap.bin`, `out/capture1.bin`): the Espressif firmware streams **raw, headerless 2048-byte frames** (no `00 80`/`00 90` sync words, unlike the CH340 variant the Java `TempData` parser expects). Frames are 32x32 uint16 LE, /10.0 °C, contiguous. Driver now auto-detects raw mode and decodes correctly (see `thermalview/device.py`).
 
 ## Native renderer (reference, for optional fidelity)
 
