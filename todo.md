@@ -117,6 +117,8 @@ Source of truth: `out/jadx/sources/com/ruiqi/hongwai/TempData.java` and
       commands, frame iterator, raw capture hook
 - [x] `thermalview/cli.py` + `__main__.py`: `ports`, `info`, `capture`,
       `stream`, `decode`, `emissivity`
+- [x] `thermalview/viewer.py`: live web viewer (`view`) that tolerates clients
+      aborting the polling image request (no more `BrokenPipeError` tracebacks)
 - [x] `pyproject.toml` (+ console script `thermalview`), `README.md`
 - [x] `tests/`: 34 passing tests covering commands, framing, chunking,
       temperature scaling, flips, palettes, rendering and CLI

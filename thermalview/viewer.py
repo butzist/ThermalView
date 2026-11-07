@@ -173,9 +173,7 @@ _HTML = """<!doctype html>
 </div>
 <script>
 const img = document.getElementById('frame');
-const fields = ['min','max','mean','center','minpos','maxpos','seq'];
-function refresh() {
-  img.src = '/frame.png?t=' + Date.now();
+function showStats() {
   fetch('/stats').then(r=>r.json()).then(d=>{
     if(!d.ready) return;
     document.getElementById('min').textContent = d.min_c.toFixed(1)+' C';
@@ -187,7 +185,21 @@ function refresh() {
     document.getElementById('seq').textContent = d.seq;
   }).catch(()=>{});
 }
-setInterval(refresh, 120);
+// Issue the next frame request only after the previous one has finished so
+// the browser never cancels an in-flight response (which the server would
+// otherwise see as a broken pipe).
+function refresh() {
+  let done = false;
+  const finish = () => {
+    if (done) return;
+    done = true;
+    setTimeout(refresh, 150);
+  };
+  img.onload = finish;
+  img.onerror = finish;
+  img.src = '/frame.png?t=' + Date.now();
+  showStats();
+}
 refresh();
 </script>
 </body>
@@ -197,34 +209,48 @@ refresh();
 
 def make_handler(viewer: ThermalViewer):
     class Handler(BaseHTTPRequestHandler):
+        def _send(
+            self,
+            body: bytes,
+            content_type: str,
+            *,
+            status: int = 200,
+            cache_control: str | None = None,
+        ) -> bool:
+            """Write one response, tolerating clients that hang up early.
+
+            The page refreshes ``/frame.png`` continuously, and browsers abort
+            an in-flight image request when the ``src`` changes or the tab is
+            closed.  A vanished peer is normal here, so it must not surface as
+            an unhandled ``BrokenPipeError`` traceback in the server log.
+            """
+            try:
+                self.send_response(status)
+                self.send_header("Content-Type", content_type)
+                self.send_header("Content-Length", str(len(body)))
+                if cache_control:
+                    self.send_header("Cache-Control", cache_control)
+                self.end_headers()
+                if body:
+                    self.wfile.write(body)
+                return True
+            except ConnectionError:
+                # Broken pipe / connection reset / aborted by the peer.
+                self.close_connection = True
+                return False
+
         def do_GET(self):  # noqa: N802
             parsed = urlparse(self.path)
             if parsed.path == "/":
                 body = _HTML.replace("{size}", str(viewer.size)).encode()
-                self.send_response(200)
-                self.send_header("Content-Type", "text/html; charset=utf-8")
-                self.send_header("Content-Length", str(len(body)))
-                self.end_headers()
-                self.wfile.write(body)
+                self._send(body, "text/html; charset=utf-8")
             elif parsed.path == "/frame.png":
-                data = viewer.render_png()
-                self.send_response(200)
-                self.send_header("Content-Type", "image/png")
-                self.send_header("Content-Length", str(len(data)))
-                self.send_header("Cache-Control", "no-store")
-                self.end_headers()
-                self.wfile.write(data)
+                self._send(viewer.render_png(), "image/png", cache_control="no-store")
             elif parsed.path == "/stats":
                 data = viewer.stats_json().encode()
-                self.send_response(200)
-                self.send_header("Content-Type", "application/json")
-                self.send_header("Content-Length", str(len(data)))
-                self.send_header("Cache-Control", "no-store")
-                self.end_headers()
-                self.wfile.write(data)
+                self._send(data, "application/json", cache_control="no-store")
             else:
-                self.send_response(404)
-                self.end_headers()
+                self._send(b"not found\n", "text/plain; charset=utf-8", status=404)
 
         def log_message(self, *args):  # quiet
             return
