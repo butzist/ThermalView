@@ -79,7 +79,11 @@ public class MainActivity extends Activity implements SerialInputOutputManager.L
         usbManager = (UsbManager) getSystemService(Context.USB_SERVICE);
         bitmap = Bitmap.createBitmap(W, H, Bitmap.Config.ARGB_8888);
         canvas = new Canvas(bitmap);
-        registerReceiver(receiver, new IntentFilter(ACTION_USB_PERMISSION));
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+            registerReceiver(receiver, new IntentFilter(ACTION_USB_PERMISSION), Context.RECEIVER_EXPORTED);
+        } else {
+            registerReceiver(receiver, new IntentFilter(ACTION_USB_PERMISSION));
+        }
     }
 
     private void connect() {
