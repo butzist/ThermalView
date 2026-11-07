@@ -152,6 +152,21 @@ nix develop -c pytest
 ![TIOP01 front](assets/device_front.jpg)
 ![TIOP01 back](assets/device_back.jpg)
 
+## Android app
+
+A minimal Android app is provided under `android/` and a pre-built, debug-signed
+APK is attached to the
+[latest release](https://github.com/butzist/ThermalView/releases/latest).
+It opens the adapter with `usb-serial-for-android`, reads 32×32 frames and
+renders them. Install with:
+
+```sh
+adb install ThermalView.apk
+```
+
+To build from source you need the Android SDK (platform 37, build-tools 37) and
+the `usb-serial-for-android` AAR; see `android/`.
+
 ## Reverse-engineering process
 
 This repository is the result of a static + dynamic reverse-engineering effort
