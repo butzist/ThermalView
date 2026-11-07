@@ -9,7 +9,7 @@ OTG) with no install and no backend.
 Serve the directory over HTTP (Web Serial requires a secure context):
 
 ```sh
-cd web
+cd docs
 python3 -m http.server 8000
 # open http://localhost:8000
 ```
@@ -17,7 +17,7 @@ python3 -m http.server 8000
 ## Deploy to GitHub Pages
 
 1. Push this repository to GitHub.
-2. In the repo settings → Pages, set source to the `web/` folder (or move these
+2. In the repo settings → Pages, set source to the `docs/` folder (or move these
    files to a `docs/` folder and select that).
 3. Open the published HTTPS URL in Chrome/Edge and click **Connect**.
 
