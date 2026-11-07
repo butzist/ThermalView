@@ -114,17 +114,23 @@ function render() {
 // ---------- web serial ----------
 async function connect() {
   if (!('serial' in navigator)) {
-    setStatus('Web Serial not supported. Use Chrome/Edge.');
+    setStatus('Web Serial not supported in this browser. Use Chrome (Android) / Chrome or Edge (desktop).');
     return;
   }
+  // Some browsers (e.g. Brave on Android) hide Web Serial behind a flag or
+  // block it entirely. Try the filtered picker first, then an unfiltered one.
+  const filters = [{ usbVendorId: 0x303A, usbProductId: 0x4001 }];
   try {
-    port = await navigator.serial.requestPort({
-      filters: [{ usbVendorId: 0x303A, usbProductId: 0x4001 }]
-    });
-  } catch (e) {
-    // fallback: let user pick any
-    try { port = await navigator.serial.requestPort(); }
-    catch (e2) { setStatus('cancelled'); return; }
+    port = await navigator.serial.requestPort({ filters });
+  } catch (e1) {
+    console.warn('filtered requestPort failed:', e1);
+    try {
+      port = await navigator.serial.requestPort();
+    } catch (e2) {
+      console.warn('unfiltered requestPort failed:', e2);
+      setStatus('no device selected: ' + (e2 && e2.message ? e2.message : e2));
+      return;
+    }
   }
   try {
     await port.open({ baudRate: 115200 });

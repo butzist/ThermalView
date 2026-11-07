@@ -45,3 +45,14 @@ python3 -m http.server 8000
   opening the port fails, no frames are produced — see above.
 - **No data / device disconnected**: the adapter streams as soon as the port
   opens; if it was replugged, re-open the connection.
+
+## Android / Brave notes
+
+- Web Serial on Android is supported by **Chrome** (and Chromium forks that
+  keep it enabled). **Brave** may disable or restrict it; if Connect shows
+  "no compatible devices found" or "Web Serial not supported", try Chrome.
+- The device must be a recognised CDC-ACM serial port. If the browser does
+  not list it even in the unfiltered picker, the device's USB descriptor is
+  not being exposed as a serial port by the OS — in that case a native app
+  (using `usb-serial-for-android`) is required instead of the web app.
+- Use a USB-OTG cable and grant the browser permission prompt.
